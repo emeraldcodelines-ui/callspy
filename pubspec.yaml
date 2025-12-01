@@ -1,0 +1,15 @@
+name: callspy
+description: A legitimate call recording utility.
+publish_to: 'none'
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.0.0
+  permission_handler: ^10.0.0
+
+flutter:
+  uses-material-design: true
