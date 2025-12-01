@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -6,19 +7,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isRecording = false;
-  List<String> _recordings = [];
+  Map<Permission, PermissionStatus> _permissionsStatus = {};
 
-  void _toggleRecording() {
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    final statuses = await [
+      Permission.microphone,
+      Permission.storage,
+      Permission.phone,
+    ].request();
+
     setState(() {
-      _isRecording = !_isRecording;
-      if (_isRecording) {
-        // Placeholder: Start recording logic
-        _recordings.add('Recording started at ${DateTime.now()}');
-      } else {
-        // Placeholder: Stop recording logic
-        _recordings.add('Recording stopped at ${DateTime.now()}');
-      }
+      _permissionsStatus = statuses;
     });
   }
 
@@ -26,29 +31,53 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Call Recordings'),
+        title: Text('Home Screen'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _recordings.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_recordings[index]),
-                );
-              },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Permission Status:',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: _toggleRecording,
-              child: Text(_isRecording ? 'Stop Recording' : 'Start Recording'),
-            ),
-          ),
-        ],
+            SizedBox(height: 10),
+            ..._permissionsStatus.entries.map((entry) {
+              final permissionName = _permissionName(entry.key);
+              final status = entry.value;
+              return Text(
+                '$permissionName: ${status.isGranted ? 'Granted' : 'Denied'}',
+                style: TextStyle(
+                  color: status.isGranted ? Colors.green : Colors.red,
+                  fontSize: 16,
+                ),
+              );
+            }).toList(),
+            if (_permissionsStatus.values.any((status) => !status.isGranted))
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Text(
+                  'Some permissions are denied. Please enable them in settings.',
+                  style: TextStyle(color: Colors.red, fontSize: 16),
+                ),
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  String _permissionName(Permission permission) {
+    switch (permission) {
+      case Permission.microphone:
+        return 'Microphone';
+      case Permission.storage:
+        return 'Storage';
+      case Permission.phone:
+        return 'Phone';
+      default:
+        return permission.toString();
+    }
   }
 }
